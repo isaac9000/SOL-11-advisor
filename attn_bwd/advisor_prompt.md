@@ -64,18 +64,6 @@ grad_value_states = dV_exp.reshape(bs,8,10,skv,d).sum(dim=2).to(bf16)
 
 ---
 
-## Key Bottlenecks
-
-The two batched matmuls dominate:
-1. **bmm #1** — `[bs*80, sq, 128] @ [bs*80, 128, skv]` → `[bs*80, sq, skv]`
-2. **bmm #2** — `[bs*80, skv, sq] @ [bs*80, sq, 128]` → `[bs*80, skv, 128]`
-
-GQA is implicit: value_states has only 8 KV heads that must be logically expanded to 80 before bmm #1 and contracted after bmm #2 (sum over 10 groups). Avoiding the explicit `.expand().reshape()` allocation is a win.
-
-The attention weight matrices `[bs, 80, sq, skv]` can be large (case #6: 32×80×691×773 ≈ 1.37B elements in bf16 = 2.74 GB). Memory bandwidth is often the limiter for large cases; arithmetic intensity for small cases.
-
----
-
 ## Your Role
 
 Each iteration:
