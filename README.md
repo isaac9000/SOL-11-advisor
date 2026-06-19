@@ -11,7 +11,9 @@ inv_freq_exp = inv_freq[None, :, None].float().expand(bs, 64, 1)  # [bs, 64, 1]
 pos_exp      = position_ids[:, None, :].float()                    # [bs, 1, seq_len]
 freqs        = (inv_freq_exp @ pos_exp).transpose(1, 2)            # [bs, seq_len, 64]
 emb          = cat((freqs, freqs), dim=-1)                         # [bs, seq_len, 128]
-cos_sin      = stack([emb.cos(), emb.sin()], dim=-1)               # [bs, seq_len, 128, 2]
+cos          = emb.cos() * attention_scaling                        # [bs, seq_len, 128]
+sin          = emb.sin() * attention_scaling                        # [bs, seq_len, 128]
+cos_sin      = stack([cos, sin], dim=-1)                           # [bs, seq_len, 128, 2]
 return cos_sin.to(bfloat16)
 ```
 

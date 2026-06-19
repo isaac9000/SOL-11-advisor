@@ -103,7 +103,12 @@ def _dispatch_tool(name: str, args: dict) -> str:
     elif name == "read_file":
         path = args.get("path", "")
         if not os.path.isabs(path):
-            path = os.path.join(PROJECT_DIR, path)
+            candidate = os.path.join(PROJECT_DIR, path)
+            if not os.path.exists(candidate) and _tools._run_directory:
+                run_candidate = os.path.join(_tools._run_directory, path)
+                if os.path.exists(run_candidate):
+                    candidate = run_candidate
+            path = candidate
         try:
             with open(path) as f:
                 return f.read()
