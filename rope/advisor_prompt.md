@@ -62,22 +62,6 @@ return cos_sin.to(bfloat16)
 
 ---
 
-## Computational Profile
-
-This kernel is **memory-bandwidth-bound** for the output write. Key analysis:
-
-- **`inv_freq`**: 64 floats = 256 bytes — fits entirely in registers/L1 across all cases.
-- **`position_ids`**: `bs × seq_len × 8` bytes (int64). For large cases (bs=64, seq=541): ~278 KB.
-- **Output `cos_sin`**: `bs × seq_len × 128 × 2 × 2` bytes (bf16). For bs=64, seq=541: ~8.9 MB.
-- The output write dominates. Any approach that avoids a separate intermediate `emb` tensor reduces memory pressure.
-- The inner computation per output element is: one multiply (position × inv_freq), one cos+sin, one cast to bf16.
-- `attention_scaling = 1.0` always — that multiply is a no-op and should be elided.
-- The `stack([cos, sin], dim=-1)` creates interleaved cos/sin pairs at the innermost dim.
-
-**Key opportunity:** A fused Triton kernel eliminates all intermediate tensors (`freqs`, `emb`, `cos`, `sin`) and writes directly to the output in bf16. This avoids ~4× the output data in intermediate f32 allocations.
-
----
-
 ## Your Role
 
 Each iteration:
