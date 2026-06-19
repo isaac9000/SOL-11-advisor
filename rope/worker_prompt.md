@@ -58,12 +58,6 @@ You can use Triton (`import triton; import triton.language as tl`), inline CUDA 
 
 **Correctness tolerance:** rtol=1e-2, atol=1e-2.
 
-## Output shape note
-
-The output `cos_sin` has shape `[batch_size, seq_len, 128, 2]` in bfloat16. The last dimension interleaves cosine (index 0) and sine (index 1) for each of the 128 frequency dimensions. Preserve this layout exactly.
-
-`submission.py` may also contain a `get_inputs` function — do NOT modify it. Only `run` is evaluated and timed.
-
 ## Your Role
 
 You are the **implementer**, not the strategist. The advisor has already decided what to try. Your job is:
