@@ -1,14 +1,14 @@
 """
-Advisor-Worker agentic loop for attention-backward kernel optimization.
+Advisor-Worker agentic loop for RoPE kernel optimization.
 
 Direct Anthropic SDK implementation — no LangGraph or deepagents.
 Evaluation runs outside the loop: the orchestrator calls run_eval.py
 after each worker turn and handles all logging.
 
 Usage:
-    uv run attn_bwd/agent.py
-    uv run attn_bwd/agent.py --iterations 20 --baseline attn_bwd/starting_point.py
-    uv run attn_bwd/agent.py --advisor-model claude-opus-4-7 --worker-model claude-sonnet-4-6
+    uv run rope/agent.py
+    uv run rope/agent.py --iterations 20 --baseline rope/starting_point.py
+    uv run rope/agent.py --advisor-model claude-opus-4-7 --worker-model claude-sonnet-4-6
 """
 
 import argparse
@@ -35,10 +35,10 @@ from tools import (
     set_llm_call_count,
 )
 
-PROJECT_DIR    = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT      = os.path.dirname(PROJECT_DIR)
+PROJECT_DIR     = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT       = os.path.dirname(PROJECT_DIR)
 SUBMISSION_FILE = os.path.join(PROJECT_DIR, "submission.py")
-RESULTS_FILE   = os.path.join(PROJECT_DIR, "results.json")
+RESULTS_FILE    = os.path.join(PROJECT_DIR, "results.json")
 
 
 def load_prompt(filename: str) -> str:
@@ -394,7 +394,7 @@ def print_final_report(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Advisor-Worker attn_bwd Optimization Agent"
+        description="Advisor-Worker RoPE Kernel Optimization Agent"
     )
     parser.add_argument("--iterations", "-n", type=int, default=20)
     parser.add_argument("--checkpoint-every", "-c", type=int, default=5)
@@ -405,9 +405,9 @@ def main() -> None:
 
     load_dotenv(os.path.join(REPO_ROOT, ".env"))
 
-    default_model  = os.environ.get("AUTORESEARCH_MODEL", "claude-sonnet-4-6")
-    advisor_model  = args.advisor_model or default_model
-    worker_model   = args.worker_model or default_model
+    default_model = os.environ.get("AUTORESEARCH_MODEL", "claude-sonnet-4-6")
+    advisor_model = args.advisor_model or default_model
+    worker_model  = args.worker_model or default_model
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("Error: ANTHROPIC_API_KEY not set")
@@ -423,7 +423,7 @@ def main() -> None:
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = os.path.join(PROJECT_DIR, "runs",
-                           f"{timestamp}_attn_bwd_{baseline_name}")
+                           f"{timestamp}_rope_{baseline_name}")
     os.makedirs(run_dir, exist_ok=True)
     set_run_directory(run_dir)
 
@@ -440,7 +440,7 @@ def main() -> None:
     advisor_history: list = []
     worker_history: list  = []
 
-    print(f"Starting advisor-worker attn_bwd optimization loop")
+    print(f"Starting advisor-worker RoPE optimization loop")
     print(f"  Advisor model:  {advisor_model}")
     print(f"  Worker model:   {worker_model}")
     print(f"  Baseline:       {baseline_name}")

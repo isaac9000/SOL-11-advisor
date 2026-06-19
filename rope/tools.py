@@ -1,4 +1,4 @@
-"""Shared state and tool implementations for the attn_bwd optimization loop."""
+"""Shared state and tool implementations for the RoPE optimization loop."""
 
 import os
 from datetime import datetime, timezone
@@ -126,16 +126,16 @@ def _update_plot():
                 label="best time", zorder=6)
 
     # Reference lines
-    ax.axhline(-756, color="#9ca3af", linewidth=1, linestyle="--", alpha=0.6,
-               label="baseline ≈756 µs")
-    ax.axhline(-82,  color="#10b981", linewidth=1, linestyle="--", alpha=0.6,
-               label="SOL ≈82 µs")
+    ax.axhline(-5.53, color="#9ca3af", linewidth=1, linestyle="--", alpha=0.6,
+               label="baseline ≈5.53 µs")
+    ax.axhline(-0.68, color="#10b981", linewidth=1, linestyle="--", alpha=0.6,
+               label="SOL ≈0.68 µs")
 
     ax.set_ylim(y_lo * 1.05, y_hi)
-    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.1f"))
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
     ax.set_xlabel("Iteration #", fontsize=12)
     ax.set_ylabel("Negative Latency (-μs)", fontsize=12)
-    ax.set_title("GPU MODE attn_bwd — Autoresearch Progress", fontsize=14, fontweight="bold")
+    ax.set_title("RoPE — Autoresearch Progress", fontsize=14, fontweight="bold")
     ax.legend(loc="upper right", framealpha=0.9)
     ax.grid(True, alpha=0.3)
 
@@ -191,10 +191,10 @@ def _update_iteration_plot():
     ax.scatter(iters, bests, c="#3b82f6", s=60, zorder=5,
                edgecolors="white", linewidths=0.5)
 
-    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.1f"))
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
     ax.set_xlabel("Iteration #", fontsize=12)
     ax.set_ylabel("Negative Latency (-μs)", fontsize=12)
-    ax.set_title("GPU MODE attn_bwd — Best per Agent Iteration",
+    ax.set_title("RoPE — Best per Agent Iteration",
                  fontsize=14, fontweight="bold")
     ax.grid(True, alpha=0.3)
 

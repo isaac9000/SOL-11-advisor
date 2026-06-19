@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-CLI wrapper that submits a kernel to the deployed Modal B200 evaluator
+CLI wrapper that submits a RoPE kernel to the deployed Modal B200 evaluator
 and writes results.json in markdown format the agent can parse.
 
 Deploy the evaluator once before running:
-    uv run modal deploy eval_modal_attn_bwd.py
+    uv run modal deploy eval_modal_rope.py
 
 Usage:
     python run_eval.py submission.py -o results.json
@@ -19,42 +19,41 @@ import threading
 import modal
 
 TEST_CASES = [
-    {"batch_size": 4,  "seq_len_q": 256,  "seq_len_kv": 256},
-    {"batch_size": 8,  "seq_len_q": 373,  "seq_len_kv": 449},
-    {"batch_size": 4,  "seq_len_q": 1024, "seq_len_kv": 2048},
-    {"batch_size": 64, "seq_len_q": 128,  "seq_len_kv": 128},
-    {"batch_size": 2,  "seq_len_q": 256,  "seq_len_kv": 512},
-    {"batch_size": 32, "seq_len_q": 691,  "seq_len_kv": 773},
-    {"batch_size": 8,  "seq_len_q": 128,  "seq_len_kv": 128},
-    {"batch_size": 32, "seq_len_q": 512,  "seq_len_kv": 512},
-    {"batch_size": 4,  "seq_len_q": 211,  "seq_len_kv": 293},
-    {"batch_size": 8,  "seq_len_q": 256,  "seq_len_kv": 256},
-    {"batch_size": 16, "seq_len_q": 128,  "seq_len_kv": 256},
-    {"batch_size": 1,  "seq_len_q": 1024, "seq_len_kv": 1024},
-    {"batch_size": 16, "seq_len_q": 256,  "seq_len_kv": 512},
-    {"batch_size": 32, "seq_len_q": 128,  "seq_len_kv": 128},
-    {"batch_size": 1,  "seq_len_q": 512,  "seq_len_kv": 512},
-    {"batch_size": 1,  "seq_len_q": 4096, "seq_len_kv": 4096},
+    {"batch_size": 16, "seq_len": 256},
+    {"batch_size": 1,  "seq_len": 2048},
+    {"batch_size": 1,  "seq_len": 613},
+    {"batch_size": 1,  "seq_len": 1024},
+    {"batch_size": 16, "seq_len": 373},
+    {"batch_size": 16, "seq_len": 919},
+    {"batch_size": 2,  "seq_len": 131},
+    {"batch_size": 1,  "seq_len": 256},
+    {"batch_size": 4,  "seq_len": 256},
+    {"batch_size": 4,  "seq_len": 2048},
+    {"batch_size": 4,  "seq_len": 1024},
+    {"batch_size": 4,  "seq_len": 211},
+    {"batch_size": 1,  "seq_len": 512},
+    {"batch_size": 64, "seq_len": 256},
+    {"batch_size": 64, "seq_len": 541},
+    {"batch_size": 32, "seq_len": 128},
 ]
 
-BASELINE_GEOMEAN_US = 756.0
-SOL_GEOMEAN_US      = 82.0
+BASELINE_GEOMEAN_US = 5.53
+SOL_GEOMEAN_US      = 0.68
 
 
 def _case_label(tc: dict) -> str:
-    return f"bs={tc['batch_size']} sq={tc['seq_len_q']} skv={tc['seq_len_kv']}"
+    return f"bs={tc['batch_size']} sl={tc['seq_len']}"
 
 
 def format_results_markdown(res: dict, mode: str = "leaderboard") -> str:
-    gpu      = res.get("gpu_name", "NVIDIA B200")
+    gpu       = res.get("gpu_name", "NVIDIA B200")
     torch_ver = res.get("torch_version", "unknown")
-    plat     = res.get("platform", "modal-b200")
+    plat      = res.get("platform", "modal-b200")
 
-    if res["success"]:
-        status_line = "**B200 on Modal ✅ success**"
-    else:
-        status_line = "**B200 on Modal ❌ failure**"
-
+    status_line = (
+        "**B200 on Modal ✅ success**" if res["success"]
+        else "**B200 on Modal ❌ failure**"
+    )
     lines = [status_line]
 
     if res["success"]:
@@ -100,7 +99,9 @@ def format_results_markdown(res: dict, mode: str = "leaderboard") -> str:
                   f"Geometric mean: ⏱ {geomean} µs", ""]
         if score:
             lines.append(f"Score: {score}")
-            lines.append(f"(baseline ≈ {BASELINE_GEOMEAN_US} µs, SOL ≈ {SOL_GEOMEAN_US} µs)")
+            lines.append(
+                f"(baseline ≈ {BASELINE_GEOMEAN_US} µs, SOL ≈ {SOL_GEOMEAN_US} µs)"
+            )
             lines.append("")
         for bd in res.get("benchmark_details", []):
             label = _case_label(bd)
@@ -114,7 +115,7 @@ def format_results_markdown(res: dict, mode: str = "leaderboard") -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate an attn_bwd kernel on Modal B200")
+    parser = argparse.ArgumentParser(description="Evaluate a RoPE kernel on Modal B200")
     parser.add_argument("submission", help="Path to submission.py")
     parser.add_argument("-o", "--output", default="results.json")
     parser.add_argument(
@@ -134,11 +135,11 @@ def main():
 
     print(f"Submitting {args.submission} to Modal B200 ({args.mode} mode)...")
 
-    evaluate_kernel = modal.Function.from_name("attn-bwd-kernel-eval", "evaluate_kernel")
+    evaluate_kernel = modal.Function.from_name("rope-kernel-eval", "evaluate_kernel")
 
-    MODAL_TIMEOUT  = 600
-    result_holder  = [None]
-    error_holder   = [None]
+    MODAL_TIMEOUT = 600
+    result_holder = [None]
+    error_holder  = [None]
 
     def _call():
         try:
